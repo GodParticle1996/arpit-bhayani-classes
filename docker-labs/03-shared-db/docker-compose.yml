@@ -1,0 +1,67 @@
+# KhanaKart lab 03 — shared database
+#   docker compose --profile ex2-four-pains up --build
+#   SCHEMA=v2 MODE=direct docker compose --profile ex2-four-pains up
+x-node: &node
+  build: .
+  restart: "no"
+  environment: &env
+    SCHEMA: ${SCHEMA:-v1}
+    MODE: ${MODE:-direct}
+    DB_PRIMARY_HOST: db-primary
+    DB_REPLICA_HOST: db-replica
+    RESTAURANT_SERVICE_HOST: restaurant-service
+
+services:
+  db-primary:
+    <<: *node
+    command: node services/db-server.js
+    ports: ["5432:5432"]
+    profiles: ["ex1-shared-write", "ex2-four-pains"]
+  restaurant-service:
+    <<: *node
+    command: node services/restaurant-service.js
+    ports: ["4501:4501"]
+    profiles: ["ex1-shared-write", "ex2-four-pains"]
+  review-service:
+    <<: *node
+    command: node services/review-service.js
+    ports: ["4502:4502"]
+    profiles: ["ex1-shared-write", "ex2-four-pains"]
+  order-service:
+    <<: *node
+    command: node services/order-service.js
+    ports: ["4503:4503"]
+    profiles: ["ex2-four-pains", "ex3-guardrails"]
+  analytics-jobs:
+    <<: *node
+    command: node services/analytics-jobs.js
+    ports: ["4504:4504"]
+    profiles: ["ex2-four-pains"]
+
+  # ---------- ex3-guardrails ----------
+  db-primary-guarded:
+    <<: *node
+    command: node services/db-server.js
+    ports: ["5432:5432"]
+    environment:
+      <<: *env
+      READONLY_ANALYTICS: "1"
+    networks: { default: { aliases: ["db-primary"] } }
+    profiles: ["ex3-guardrails"]
+  db-replica:
+    <<: *node
+    command: node services/db-server.js
+    ports: ["5433:5433"]
+    environment:
+      <<: *env
+      ROLE: replica
+      READONLY_ANALYTICS: "1"
+    profiles: ["ex3-guardrails"]
+  analytics-jobs-replica:
+    <<: *node
+    command: node services/analytics-jobs.js
+    ports: ["4504:4504"]
+    environment:
+      <<: *env
+      USE_REPLICA: "1"
+    profiles: ["ex3-guardrails"]

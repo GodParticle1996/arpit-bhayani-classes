@@ -1,0 +1,1 @@
+{ "service": "review", "owner": "review-team", "templateVersion": "1.0.0", "features": ["rest-external", "redis-client", "folder-structure"], "custom": ["apna logging format"] }

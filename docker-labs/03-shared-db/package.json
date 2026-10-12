@@ -1,0 +1,8 @@
+{
+  "name": "khanakart-03-shared-db",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — shared database: faayde, 4 dard, guardrails",
+  "scripts": { "start": "node start.js" },
+  "dependencies": { "express": "^5.1.0" }
+}

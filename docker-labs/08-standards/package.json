@@ -1,0 +1,19 @@
+{
+  "name": "khanakart-08-standards",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — service template (khanakart-kit), standard observability, interface standards, tolerance (rationing + kill switches)",
+  "scripts": {
+    "start": "node start.js",
+    "new-service": "node tools/new-service.js",
+    "scorecard": "node tools/scorecard.js",
+    "traffic": "node tools/traffic.js",
+    "logs": "node tools/logs.js",
+    "metrics": "node tools/metrics.js",
+    "lint-api": "node tools/api-lint.js",
+    "paginate": "node tools/paginate.js",
+    "callers": "node tools/callers.js",
+    "killswitch": "node tools/killswitch.js"
+  },
+  "dependencies": { "express": "^5.1.0" }
+}

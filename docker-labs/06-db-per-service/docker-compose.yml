@@ -1,0 +1,106 @@
+# KhanaKart lab 06 — database per service
+#   ENGINE_SEARCH=index ENGINE_SOCIAL=graph docker compose --profile ex1-right-db up --build
+#   docker compose --profile ex2-shared up --build        (ya --profile ex2-per-service)
+#   MODE=saga RIDER_FAIL_EVERY=4 docker compose --profile ex3-distributed-txn up --build
+x-node: &node
+  build: .
+  restart: "no"
+
+services:
+  # ---------- ex1-right-db ----------
+  search-service:
+    <<: *node
+    command: node services/search-service.js
+    environment: { ENGINE: "${ENGINE_SEARCH:-like}" }
+    ports: ["4801:4801"]
+    profiles: ["ex1-right-db"]
+  social-service:
+    <<: *node
+    command: node services/social-service.js
+    environment: { ENGINE: "${ENGINE_SOCIAL:-sql}" }
+    ports: ["4802:4802"]
+    profiles: ["ex1-right-db"]
+
+  # ---------- ex2-isolation: ek shared DB ----------
+  shared-db:
+    <<: *node
+    command: node services/db-server.js
+    environment: { NAME: shared-db, PORT: "5500", POOL: "15" }
+    ports: ["5500:5500"]
+    profiles: ["ex2-shared"]
+  profile-s:
+    <<: *node
+    command: node services/app-service.js
+    environment: { ROLE: profile, DB_HOST: shared-db, DB_PORT: "5500" }
+    ports: ["4811:4811"]
+    profiles: ["ex2-shared"]
+  chat-s:
+    <<: *node
+    command: node services/app-service.js
+    environment: { ROLE: chat, DB_HOST: shared-db, DB_PORT: "5500" }
+    ports: ["4812:4812"]
+    profiles: ["ex2-shared"]
+  payment-s:
+    <<: *node
+    command: node services/app-service.js
+    environment: { ROLE: payment, DB_HOST: shared-db, DB_PORT: "5500" }
+    ports: ["4813:4813"]
+    profiles: ["ex2-shared"]
+
+  # ---------- ex2-isolation: har service ka apna DB ----------
+  profile-db:
+    <<: *node
+    command: node services/db-server.js
+    environment: { NAME: profile-db, PORT: "5501", POOL: "5" }
+    ports: ["5501:5501"]
+    profiles: ["ex2-per-service"]
+  chat-db:
+    <<: *node
+    command: node services/db-server.js
+    environment: { NAME: chat-db, PORT: "5502", POOL: "5" }
+    ports: ["5502:5502"]
+    profiles: ["ex2-per-service"]
+  payment-db:
+    <<: *node
+    command: node services/db-server.js
+    environment: { NAME: payment-db, PORT: "5503", POOL: "5" }
+    ports: ["5503:5503"]
+    profiles: ["ex2-per-service"]
+  profile-p:
+    <<: *node
+    command: node services/app-service.js
+    environment: { ROLE: profile, DB_HOST: profile-db, DB_PORT: "5501" }
+    ports: ["4811:4811"]
+    profiles: ["ex2-per-service"]
+  chat-p:
+    <<: *node
+    command: node services/app-service.js
+    environment: { ROLE: chat, DB_HOST: chat-db, DB_PORT: "5502" }
+    ports: ["4812:4812"]
+    profiles: ["ex2-per-service"]
+  payment-p:
+    <<: *node
+    command: node services/app-service.js
+    environment: { ROLE: payment, DB_HOST: payment-db, DB_PORT: "5503" }
+    ports: ["4813:4813"]
+    profiles: ["ex2-per-service"]
+
+  # ---------- ex3-distributed-txn ----------
+  inventory:
+    <<: *node
+    command: node services/participant.js
+    environment: { NAME: inventory, PORT: "4821", STOCK: "50", WORK_MS: "20", LOCK: "${LOCK:-0}" }
+    ports: ["4821:4821"]
+    profiles: ["ex3-distributed-txn"]
+  delivery:
+    <<: *node
+    command: node services/participant.js
+    environment: { NAME: delivery, PORT: "4822", STOCK: "100", WORK_MS: "150", FAIL_EVERY: "${RIDER_FAIL_EVERY:-0}" }
+    ports: ["4822:4822"]
+    profiles: ["ex3-distributed-txn"]
+  order-service:
+    <<: *node
+    command: node services/order-service.js
+    environment: { MODE: "${MODE:-naive}", COORD_CRASH_ON: "${COORD_CRASH_ON:-0}", INVENTORY_HOST: inventory, DELIVERY_HOST: delivery }
+    ports: ["4820:4820"]
+    profiles: ["ex3-distributed-txn"]

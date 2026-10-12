@@ -1,0 +1,89 @@
+# KhanaKart lab 07 — API composition
+#   docker compose --profile ex1-composer up --build
+#   STRANGLER=1 CACHE=1 docker compose --profile ex2-gateway-powers up --build
+#   docker compose --profile ex3-composer-limits up --build
+x-node: &node
+  build: .
+  restart: "no"
+
+services:
+  # ---------- ex1-composer ----------
+  order:
+    <<: *node
+    command: node services/backend.js
+    environment: { ROLE: order }
+    ports: ["4901:4901"]
+    profiles: ["ex1-composer"]
+  payment:
+    <<: *node
+    command: node services/backend.js
+    environment: { ROLE: payment }
+    ports: ["4902:4902"]
+    profiles: ["ex1-composer"]
+  delivery:
+    <<: *node
+    command: node services/backend.js
+    environment: { ROLE: delivery }
+    ports: ["4903:4903"]
+    profiles: ["ex1-composer"]
+  restaurant:
+    <<: *node
+    command: node services/backend.js
+    environment: { ROLE: restaurant }
+    ports: ["4904:4904"]
+    profiles: ["ex1-composer"]
+  composer:
+    <<: *node
+    command: node services/composer.js
+    environment: { ORDER_HOST: order, PAYMENT_HOST: payment, DELIVERY_HOST: delivery, RESTAURANT_HOST: restaurant }
+    ports: ["4900:4900"]
+    profiles: ["ex1-composer"]
+
+  # ---------- ex2-gateway-powers ----------
+  monolith:
+    <<: *node
+    command: node services/monolith.js
+    ports: ["4911:4911"]
+    profiles: ["ex2-gateway-powers"]
+  payment-service:
+    <<: *node
+    command: node services/payment-service.js
+    ports: ["4912:4912"]
+    profiles: ["ex2-gateway-powers"]
+  gateway:
+    <<: *node
+    command: node services/gateway.js
+    environment:
+      MONOLITH_HOST: monolith
+      PAYMENT_SERVICE_HOST: payment-service
+      STRANGLER: "${STRANGLER:-0}"
+      CACHE: "${CACHE:-0}"
+      RATE_LIMIT: "${RATE_LIMIT:-10}"
+    ports: ["4910:4910"]
+    profiles: ["ex2-gateway-powers"]
+
+  # ---------- ex3-composer-limits ----------
+  menu:
+    <<: *node
+    command: node services/heavy-backends.js
+    environment: { ROLE: menu }
+    ports: ["4921:4921"]
+    profiles: ["ex3-composer-limits"]
+  reviews:
+    <<: *node
+    command: node services/heavy-backends.js
+    environment: { ROLE: reviews, DOWN: "${REVIEWS_DOWN:-0}" }
+    ports: ["4922:4922"]
+    profiles: ["ex3-composer-limits"]
+  offers:
+    <<: *node
+    command: node services/heavy-backends.js
+    environment: { ROLE: offers }
+    ports: ["4923:4923"]
+    profiles: ["ex3-composer-limits"]
+  gateway-heavy:
+    <<: *node
+    command: node services/gateway-heavy.js
+    environment: { MENU_HOST: menu, REVIEWS_HOST: reviews, OFFERS_HOST: offers, MEM_LIMIT_MB: "${MEM_LIMIT_MB:-64}" }
+    ports: ["4920:4920"]
+    profiles: ["ex3-composer-limits"]

@@ -1,0 +1,57 @@
+# KhanaKart lab 02 — timeouts, retries, idempotency, async ingest
+#   docker compose --profile ex1-timeout up --build
+#   SLOW_MS=8000 TIMEOUT_MS=300 FALLBACK=1 docker compose --profile ex1-timeout up
+x-node: &node
+  build: .
+  restart: "no"
+
+services:
+  analytics-service:
+    <<: *node
+    command: node services/analytics-service.js
+    ports: ["4401:4401"]
+    environment:
+      SLOW_MS: ${SLOW_MS:-60}
+      MAX_INFLIGHT: ${MAX_INFLIGHT:-1000}
+    profiles: ["ex1-timeout"]
+  search-service:
+    <<: *node
+    command: node services/search-service.js
+    ports: ["4402:4402"]
+    environment:
+      TIMEOUT_MS: ${TIMEOUT_MS:-0}
+      FALLBACK: ${FALLBACK:-0}
+      ANALYTICS_SERVICE_HOST: analytics-service
+    profiles: ["ex1-timeout"]
+
+  bank:
+    <<: *node
+    command: node services/bank.js
+    ports: ["4411:4411"]
+    environment:
+      DELAY_MS: ${DELAY_MS:-1500}
+    profiles: ["ex2-idempotency"]
+  payment-service:
+    <<: *node
+    command: node services/payment-service.js
+    ports: ["4412:4412"]
+    environment:
+      TIMEOUT_MS: ${TIMEOUT_MS:-1000}
+      RETRIES: ${RETRIES:-2}
+      USE_KEY: ${USE_KEY:-0}
+      BANK_HOST: bank
+    profiles: ["ex2-idempotency"]
+
+  search-async:
+    <<: *node
+    command: node services/search-async.js
+    ports: ["4403:4403"]
+    profiles: ["ex3-async-ingest"]
+  analytics-pusher:
+    <<: *node
+    command: node services/analytics-service.js
+    ports: ["4401:4401"]
+    environment:
+      PUSH_TO_SEARCH: "1"
+      SEARCH_ASYNC_HOST: search-async
+    profiles: ["ex3-async-ingest"]

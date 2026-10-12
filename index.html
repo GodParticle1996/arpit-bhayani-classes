@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arpit Bhayani Classes — Designing Microservices (KhanaKart)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🎓</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="topbar"></header>
+  <main id="app"></main>
+  <!-- Engine (load order CRITICAL — games.js pehle, phir labs, phir content, app.js aakhir mein) -->
+  <script src="core.js"></script>
+  <script src="data-core.js"></script>
+  <script src="visuals.js"></script>
+  <script src="games.js"></script>
+  <script src="canvas.js"></script>
+  <script src="labs.js"></script>
+  <script src="viz.js"></script>
+  <script src="mslabs.js"></script>
+  <!-- Content: har video = ek file, andar 2-4 levels -->
+  <script src="data-ms-01-scoping.js"></script>
+  <script src="data-ms-02-timeouts.js"></script>
+  <script src="data-ms-03-shared-db.js"></script>
+  <script src="data-ms-04-sync-async.js"></script>
+  <script src="data-ms-05-workflows.js"></script>
+  <script src="data-ms-06-db-per-service.js"></script>
+  <script src="data-ms-07-composition.js"></script>
+  <script src="data-ms-08-standards.js"></script>
+  <script src="data-ms-09-people.js"></script>
+  <script src="data-ms-10-bff.js"></script>
+  <script src="data-ms-boss.js"></script>
+  <!-- Screens (last — boot happens here) -->
+  <script src="app.js"></script>
+</body>
+</html>

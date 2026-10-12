@@ -1,0 +1,56 @@
+# KhanaKart lab 10 — Backend for Frontend
+#   HACK=1 docker compose --profile ex1-one-endpoint up --build
+#   docker compose --profile ex2-bffs up --build
+#   SHARED_LIB=0 docker compose --profile ex3-bff-costs up --build
+x-node: &node
+  build: .
+  restart: "no"
+
+services:
+  # ---------- core services (teeno exercises) ----------
+  restaurant:
+    <<: *node
+    command: node services/core.js
+    environment: { ROLE: restaurant }
+    ports: ["5201:5201"]
+    profiles: ["ex1-one-endpoint", "ex2-bffs", "ex3-bff-costs"]
+  reviews:
+    <<: *node
+    command: node services/core.js
+    environment: { ROLE: reviews }
+    ports: ["5202:5202"]
+    profiles: ["ex1-one-endpoint", "ex2-bffs", "ex3-bff-costs"]
+  orders:
+    <<: *node
+    command: node services/core.js
+    environment: { ROLE: orders }
+    ports: ["5203:5203"]
+    profiles: ["ex1-one-endpoint", "ex2-bffs", "ex3-bff-costs"]
+
+  # ---------- ex1-one-endpoint ----------
+  generic-api:
+    <<: *node
+    command: node services/generic-api.js
+    environment: { HACK: "${HACK:-0}", RESTAURANT_HOST: restaurant, REVIEWS_HOST: reviews, ORDERS_HOST: orders }
+    ports: ["5210:5210"]
+    profiles: ["ex1-one-endpoint"]
+
+  # ---------- ex2-bffs / ex3-bff-costs ----------
+  web-bff:
+    <<: *node
+    command: node services/bff.js
+    environment: { KIND: web, SHARED_LIB: "${SHARED_LIB:-1}", RESTAURANT_HOST: restaurant, REVIEWS_HOST: reviews, ORDERS_HOST: orders }
+    ports: ["5221:5221"]
+    profiles: ["ex2-bffs", "ex3-bff-costs"]
+  mobile-bff:
+    <<: *node
+    command: node services/bff.js
+    environment: { KIND: mobile, SHARED_LIB: "${SHARED_LIB:-1}", RESTAURANT_HOST: restaurant, REVIEWS_HOST: reviews, ORDERS_HOST: orders }
+    ports: ["5222:5222"]
+    profiles: ["ex2-bffs", "ex3-bff-costs"]
+  voice-bff:
+    <<: *node
+    command: node services/bff.js
+    environment: { KIND: voice, SHARED_LIB: "${SHARED_LIB:-1}", RESTAURANT_HOST: restaurant, REVIEWS_HOST: reviews, ORDERS_HOST: orders }
+    ports: ["5223:5223"]
+    profiles: ["ex2-bffs", "ex3-bff-costs"]

@@ -1,0 +1,12 @@
+{
+  "name": "khanakart-06-db-per-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — right DB per service, failure isolation, distributed transactions (2PC vs saga)",
+  "scripts": {
+    "start": "node start.js",
+    "flood": "node tools/flood.js",
+    "load": "node tools/load.js"
+  },
+  "dependencies": { "express": "^5.1.0" }
+}

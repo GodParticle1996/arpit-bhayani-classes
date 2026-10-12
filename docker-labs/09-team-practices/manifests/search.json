@@ -1,0 +1,1 @@
+{ "service": "search", "owner": "search-team", "templateVersion": "1.4.0", "features": ["rest-external", "grpc-internal", "circuit-breaker", "prometheus-metrics", "folder-structure"], "optOut": { "redis-client": "Elasticsearch ka request cache use karte hain — RFC-0007 approved" } }

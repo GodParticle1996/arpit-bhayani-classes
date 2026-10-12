@@ -1,0 +1,13 @@
+{
+  "name": "khanakart-05-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — orchestration, choreography (pub/sub), OTP + recommendation mix",
+  "scripts": {
+    "start": "node start.js",
+    "sub": "node services/subscriber.js",
+    "trace": "node tools/trace.js",
+    "mobile": "node tools/mobile.js"
+  },
+  "dependencies": { "express": "^5.1.0" }
+}

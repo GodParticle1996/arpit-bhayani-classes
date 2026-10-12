@@ -1,0 +1,13 @@
+{
+  "name": "khanakart-10-bff",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — one generic endpoint for all clients, per-client BFFs, BFF costs (duplication drift, extra hop)",
+  "scripts": {
+    "start": "node start.js",
+    "clients": "node tools/clients.js",
+    "consistency": "node tools/consistency.js",
+    "hop": "node tools/hop.js"
+  },
+  "dependencies": { "express": "^5.1.0" }
+}

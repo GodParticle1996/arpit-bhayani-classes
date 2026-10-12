@@ -1,0 +1,1 @@
+{ "service": "delivery", "owner": "delivery-team", "templateVersion": "1.2.0", "features": ["rest-external", "grpc-internal", "prometheus-metrics", "redis-client", "folder-structure"] }

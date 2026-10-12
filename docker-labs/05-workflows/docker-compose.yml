@@ -1,0 +1,121 @@
+# KhanaKart lab 05 — orchestration, choreography, OTP + recommendations
+#   docker compose --profile ex1-orchestrator up --build
+#   docker compose --profile ex2-choreography up --build
+#   MODE=event docker compose --profile ex3-otp-and-recs up --build
+x-node: &node
+  build: .
+  restart: "no"
+
+services:
+  # ---------- ex1-orchestrator ----------
+  restaurant-step:
+    <<: *node
+    command: node services/step.js
+    environment: { NAME: restaurant, PORT: "4702", LATENCY_MS: "300" }
+    ports: ["4702:4702"]
+    profiles: ["ex1-orchestrator"]
+  notification-step:
+    <<: *node
+    command: node services/step.js
+    environment: { NAME: notification, PORT: "4703", LATENCY_MS: "400", DOWN: "${NOTIF_DOWN:-0}" }
+    ports: ["4703:4703"]
+    profiles: ["ex1-orchestrator"]
+  delivery-step:
+    <<: *node
+    command: node services/step.js
+    environment: { NAME: delivery, PORT: "4704", LATENCY_MS: "600", FAIL_FIRST: "${RIDER_FAIL_FIRST:-0}" }
+    ports: ["4704:4704"]
+    profiles: ["ex1-orchestrator"]
+  loyalty-step:
+    <<: *node
+    command: node services/step.js
+    environment: { NAME: loyalty, PORT: "4705", LATENCY_MS: "200" }
+    ports: ["4705:4705"]
+    profiles: ["ex1-orchestrator"]
+  orchestrator:
+    <<: *node
+    command: node services/orchestrator.js
+    environment:
+      RESTAURANT_HOST: restaurant-step
+      NOTIFICATION_HOST: notification-step
+      DELIVERY_HOST: delivery-step
+      LOYALTY_HOST: loyalty-step
+      RIDER_RETRIES: "${RIDER_RETRIES:-0}"
+      ADD_LOYALTY: "${ADD_LOYALTY:-0}"
+    ports: ["4701:4701"]
+    profiles: ["ex1-orchestrator"]
+
+  # ---------- ex2-choreography + ex3 (pubsub dono mein) ----------
+  pubsub:
+    <<: *node
+    command: node services/pubsub.js
+    ports: ["4710:4710"]
+    profiles: ["ex2-choreography", "ex3-otp-and-recs"]
+  order-chor:
+    <<: *node
+    command: node services/order-chor.js
+    environment: { PUBSUB_HOST: pubsub }
+    ports: ["4711:4711"]
+    profiles: ["ex2-choreography"]
+  notification-sub:
+    <<: *node
+    command: node services/subscriber.js
+    environment: { NAME: notification, PORT: "4712", WORK_MS: "400", PUBSUB_HOST: pubsub, PAUSED: "${NOTIF_DOWN:-0}" }
+    ports: ["4712:4712"]
+    profiles: ["ex2-choreography"]
+  restaurant-sub:
+    <<: *node
+    command: node services/subscriber.js
+    environment: { NAME: restaurant, PORT: "4713", WORK_MS: "300", PUBSUB_HOST: pubsub, SKIP_WORK: "${RESTAURANT_BUG:-0}" }
+    ports: ["4713:4713"]
+    profiles: ["ex2-choreography"]
+  delivery-sub:
+    <<: *node
+    command: node services/subscriber.js
+    environment: { NAME: delivery, PORT: "4714", WORK_MS: "600", PUBSUB_HOST: pubsub }
+    ports: ["4714:4714"]
+    profiles: ["ex2-choreography"]
+  # naya subscriber baad mein:  docker compose --profile ex2-add-loyalty up -d
+  loyalty-sub:
+    <<: *node
+    command: node services/subscriber.js
+    environment: { NAME: loyalty, PORT: "4715", WORK_MS: "200", PUBSUB_HOST: pubsub }
+    ports: ["4715:4715"]
+    profiles: ["ex2-add-loyalty"]
+
+  # ---------- ex3-otp-and-recs ----------
+  sms-gateway:
+    <<: *node
+    command: node services/sms-gateway.js
+    environment: { DOWN: "${SMS_DOWN:-0}" }
+    ports: ["4722:4722"]
+    profiles: ["ex3-otp-and-recs"]
+  auth-service:
+    <<: *node
+    command: node services/auth-service.js
+    environment: { MODE: "${MODE:-sync}", PUBSUB_HOST: pubsub, SMS_GATEWAY_HOST: sms-gateway }
+    ports: ["4721:4721"]
+    profiles: ["ex3-otp-and-recs"]
+  otp-worker:
+    <<: *node
+    command: node services/subscriber.js
+    environment:
+      NAME: otp-worker
+      PORT: "4716"
+      TOPIC: otp_requested
+      PUBSUB_HOST: pubsub
+      FORWARD_URL: http://sms-gateway:4722/send
+      BACKLOG_MS: "${BACKLOG_MS:-6000}"
+    ports: ["4716:4716"]
+    profiles: ["ex3-otp-and-recs"]
+  menu:
+    <<: *node
+    command: node services/menu-service.js
+    ports: ["4724:4724"]
+    profiles: ["ex3-otp-and-recs"]
+  recommendation:
+    <<: *node
+    command: node services/recommendation.js
+    environment: { MENU_HOST: menu }
+    ports: ["4723:4723"]
+    profiles: ["ex3-otp-and-recs"]

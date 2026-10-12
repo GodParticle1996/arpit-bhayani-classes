@@ -1,0 +1,12 @@
+{
+  "name": "khanakart-07-api-composition",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — API composition at the gateway, gateway powers (auth, rate limit, reshape, strangler), composition limits (memory, partial responses)",
+  "scripts": {
+    "start": "node start.js",
+    "phone": "node tools/phone.js",
+    "heavy": "node tools/heavy.js"
+  },
+  "dependencies": { "express": "^5.1.0" }
+}

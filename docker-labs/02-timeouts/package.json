@@ -1,0 +1,8 @@
+{
+  "name": "khanakart-02-timeouts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — timeouts, retries, idempotency, async ingest",
+  "scripts": { "start": "node start.js" },
+  "dependencies": { "express": "^5.1.0" }
+}

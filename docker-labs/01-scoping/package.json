@@ -1,0 +1,12 @@
+{
+  "name": "khanakart-01-scoping",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — service boundary, loose coupling, high cohesion",
+  "scripts": {
+    "start": "node start.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

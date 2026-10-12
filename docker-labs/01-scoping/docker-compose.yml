@@ -1,0 +1,108 @@
+# KhanaKart lab 01 — service boundary, loose coupling, high cohesion
+# Ek exercise chalao:   docker compose --profile ex1-split up --build
+# Band karo:            docker compose --profile ex1-split down
+# Crash hui service apne aap restart NAHI hoti (restart: "no") — taaki blast radius dikhe.
+
+x-node: &node
+  build: .
+  restart: "no"
+  environment: &env
+    COUPON_BUG: ${COUPON_BUG:-0}
+    SCHEMA: ${SCHEMA:-v1}
+    COUPON_SERVICE_HOST: coupon-service
+    PRICING_SERVICE_HOST: pricing-service
+    DELIVERY_SERVICE_HOST: delivery-service
+
+services:
+  # ---------- ex1-monolith ----------
+  monolith:
+    <<: *node
+    command: node services/monolith.js
+    ports: ["4000:4000"]
+    profiles: ["ex1-monolith"]
+
+  # ---------- ex1-split (aur ex3 ki common services) ----------
+  menu-service:
+    <<: *node
+    command: node services/menu-service.js
+    ports: ["4101:4101"]
+    profiles: ["ex1-split"]
+  coupon-service:
+    <<: *node
+    command: node services/coupon-service.js
+    ports: ["4102:4102"]
+    profiles: ["ex1-split", "ex3-shared-code", "ex3-owned"]
+  order-service:
+    <<: *node
+    command: node services/order-service.js
+    ports: ["4103:4103"]
+    profiles: ["ex1-split"]
+
+  # ---------- ex2-direct-db ----------
+  # data/ volume dono containers share karte hain — asli zindagi mein "DB credentials share karna" jaisa
+  delivery-service:
+    <<: *node
+    command: node services/delivery-service.js
+    ports: ["4201:4201"]
+    volumes: ["riders-db:/app/data"]
+    profiles: ["ex2-direct-db"]
+  order-reads-db:
+    <<: *node
+    command: node services/order-reads-db.js
+    ports: ["4202:4202"]
+    volumes: ["riders-db:/app/data"]
+    profiles: ["ex2-direct-db"]
+  order-uses-api:
+    <<: *node
+    command: node services/order-uses-api.js
+    ports: ["4203:4203"]
+    profiles: ["ex2-direct-db"]
+
+  # ---------- ex3-shared-code ----------
+  menu-shared:
+    <<: *node
+    command: node services/menu-service.js
+    ports: ["4101:4101"]
+    environment:
+      <<: *env
+      PRICING_MODE: shared
+      FEE_VERSION: "2"
+    profiles: ["ex3-shared-code"]
+  order-shared:
+    <<: *node
+    command: node services/order-service.js
+    ports: ["4103:4103"]
+    environment:
+      <<: *env
+      PRICING_MODE: shared
+      FEE_VERSION: "1"
+    profiles: ["ex3-shared-code"]
+
+  # ---------- ex3-owned ----------
+  pricing-service:
+    <<: *node
+    command: node services/pricing-service.js
+    ports: ["4303:4303"]
+    environment:
+      <<: *env
+      FEE_VERSION: "2"
+    profiles: ["ex3-owned"]
+  menu-owned:
+    <<: *node
+    command: node services/menu-service.js
+    ports: ["4101:4101"]
+    environment:
+      <<: *env
+      PRICING_MODE: owned
+    profiles: ["ex3-owned"]
+  order-owned:
+    <<: *node
+    command: node services/order-service.js
+    ports: ["4103:4103"]
+    environment:
+      <<: *env
+      PRICING_MODE: owned
+    profiles: ["ex3-owned"]
+
+volumes:
+  riders-db:

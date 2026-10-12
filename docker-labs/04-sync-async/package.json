@@ -1,0 +1,8 @@
+{
+  "name": "khanakart-04-sync-async",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — sync chain, cascading failure + circuit breaker, message broker",
+  "scripts": { "start": "node start.js", "burst": "node tools/burst.js" },
+  "dependencies": { "express": "^5.1.0" }
+}

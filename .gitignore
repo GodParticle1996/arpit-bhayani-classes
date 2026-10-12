@@ -1,0 +1,16 @@
+node_modules/
+docker-labs/*/node_modules/
+docker-labs/*/data/*.json
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+dist/
+build/
+.next/
+vu_output/
+*.webm
+*.mkv
+.DS_Store
+*.log

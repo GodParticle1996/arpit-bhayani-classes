@@ -1,0 +1,72 @@
+# KhanaKart lab 08 — standards (kit, observability, interfaces, tolerance)
+# Code, logs/ aur config/ host se mount hain — tools (npm run logs, killswitch...) host par chalao.
+#   docker compose --profile ex2-observability up --build
+x-node: &node
+  build: .
+  restart: "no"
+  volumes: [".:/app", "/app/node_modules"]
+
+services:
+  # ---------- ex1-template ----------
+  rewards-legacy:
+    <<: *node
+    command: node services/rewards-legacy.js
+    ports: ["5031:5031"]
+    profiles: ["ex1-template"]
+  # naya service template se bana ke:  docker compose run --rm -p 5032:5032 toolbox node services/reviews.js
+  toolbox:
+    <<: *node
+    command: node -e "console.log('toolbox ready')"
+    profiles: ["ex1-template"]
+
+  # ---------- ex2-observability ----------
+  cart:
+    <<: *node
+    command: node services/cart.js
+    ports: ["5002:5002"]
+    profiles: ["ex2-observability"]
+  coupon:
+    <<: *node
+    command: node services/coupon.js
+    environment: { COUPON_BUG: "${COUPON_BUG:-0}" }
+    ports: ["5003:5003"]
+    profiles: ["ex2-observability"]
+  pricing-legacy:
+    <<: *node
+    command: node services/pricing-legacy.js
+    ports: ["5004:5004"]
+    profiles: ["ex2-observability"]
+  checkout:
+    <<: *node
+    command: node services/checkout.js
+    environment: { CART_HOST: cart, COUPON_HOST: coupon, PRICING_HOST: pricing-legacy }
+    ports: ["5001:5001"]
+    profiles: ["ex2-observability"]
+
+  # ---------- ex3-interfaces ----------
+  orders-messy:
+    <<: *node
+    command: node services/orders-api.js
+    environment: { STYLE: messy }
+    ports: ["5011:5011"]
+    profiles: ["ex3-interfaces"]
+  orders-standard:
+    <<: *node
+    command: node services/orders-api.js
+    environment: { STYLE: standard }
+    ports: ["5012:5012"]
+    profiles: ["ex3-interfaces"]
+
+  # ---------- ex4-tolerance ----------
+  avatar:
+    <<: *node
+    command: node services/avatar.js
+    environment: { AVATAR_DOWN: "${AVATAR_DOWN:-0}" }
+    ports: ["5022:5022"]
+    profiles: ["ex4-tolerance"]
+  profile:
+    <<: *node
+    command: node services/profile.js
+    environment: { AVATAR_HOST: avatar }
+    ports: ["5021:5021"]
+    profiles: ["ex4-tolerance"]

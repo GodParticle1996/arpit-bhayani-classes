@@ -1,0 +1,1 @@
+{ "service": "payment", "owner": "payment-team", "templateVersion": "1.4.0", "features": ["rest-external", "grpc-internal", "circuit-breaker", "prometheus-metrics", "redis-client", "folder-structure"] }

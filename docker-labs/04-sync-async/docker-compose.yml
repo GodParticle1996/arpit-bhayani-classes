@@ -1,0 +1,77 @@
+# KhanaKart lab 04 — sync chain, cascading failure + circuit breaker, message broker
+#   docker compose --profile ex1-sync-chain up --build
+#   TAX_DOWN=1 BREAKER=1 TIMEOUT_MS=1000 docker compose --profile ex2-cascade up
+x-node: &node
+  build: .
+  restart: "no"
+
+services:
+  # ---------- ex1-sync-chain ----------
+  restaurant:
+    <<: *node
+    command: node services/leaf.js
+    environment: { NAME: restaurant, PORT: "4602", LATENCY_MS: "300" }
+    ports: ["4602:4602"]
+    profiles: ["ex1-sync-chain"]
+  delivery:
+    <<: *node
+    command: node services/leaf.js
+    environment: { NAME: delivery, PORT: "4603", LATENCY_MS: "600" }
+    ports: ["4603:4603"]
+    profiles: ["ex1-sync-chain"]
+  notification:
+    <<: *node
+    command: node services/leaf.js
+    environment: { NAME: notification, PORT: "4604", LATENCY_MS: "400", DOWN: "${NOTIF_DOWN:-0}" }
+    ports: ["4604:4604"]
+    profiles: ["ex1-sync-chain"]
+  order-sync:
+    <<: *node
+    command: node services/order-sync.js
+    environment: { RESTAURANT_HOST: restaurant, DELIVERY_HOST: delivery, NOTIFICATION_HOST: notification }
+    ports: ["4601:4601"]
+    profiles: ["ex1-sync-chain"]
+
+  # ---------- ex2-cascade ----------
+  tax:
+    <<: *node
+    command: node services/leaf.js
+    environment: { NAME: tax, PORT: "4614", LATENCY_MS: "50", DOWN: "${TAX_DOWN:-0}" }
+    ports: ["4614:4614"]
+    profiles: ["ex2-cascade"]
+  pricing:
+    <<: *node
+    command: node services/chain.js
+    environment: { ROLE: pricing, TAX_HOST: tax, TIMEOUT_MS: "${TIMEOUT_MS:-1000}", BREAKER: "${BREAKER:-0}" }
+    ports: ["4613:4613"]
+    profiles: ["ex2-cascade"]
+  order:
+    <<: *node
+    command: node services/chain.js
+    environment: { ROLE: order, PRICING_HOST: pricing }
+    ports: ["4612:4612"]
+    profiles: ["ex2-cascade"]
+  gateway:
+    <<: *node
+    command: node services/chain.js
+    environment: { ROLE: gateway, ORDER_HOST: order }
+    ports: ["4611:4611"]
+    profiles: ["ex2-cascade"]
+
+  # ---------- ex3-broker ----------
+  broker:
+    <<: *node
+    command: node services/broker.js
+    ports: ["4620:4620"]
+    profiles: ["ex3-broker"]
+  order-async:
+    <<: *node
+    command: node services/order-async.js
+    environment: { BROKER_HOST: broker, SYNC_NOTIFY: "${SYNC_NOTIFY:-0}" }
+    ports: ["4621:4621"]
+    profiles: ["ex3-broker"]
+  notification-worker:
+    <<: *node
+    command: node services/notification-worker.js
+    environment: { BROKER_HOST: broker, WORKERS: "${WORKERS:-2}", EMAIL_DOWN: "${EMAIL_DOWN:-0}" }
+    profiles: ["ex3-broker"]

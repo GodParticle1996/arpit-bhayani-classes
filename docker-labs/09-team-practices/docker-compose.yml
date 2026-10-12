@@ -1,0 +1,39 @@
+# KhanaKart lab 09 — team practices
+# data/, docs/, manifests/ host se mount — tools host par ya toolbox container mein chalao.
+#   docker compose --profile ex1-data-decision up --build
+#   STORE=dual docker compose --profile ex2-swap-store up --build
+#   docker compose run --rm toolbox npm run drift
+x-node: &node
+  build: .
+  restart: "no"
+  volumes: [".:/app", "/app/node_modules"]
+
+services:
+  # ---------- ex1-data-decision ----------
+  delivery-json:
+    <<: *node
+    command: node services/delivery-json.js
+    environment: { RIDER_SEARCH_MS: "${RIDER_SEARCH_MS:-0}" }
+    ports: ["5101:5101"]
+    profiles: ["ex1-data-decision"]
+  delivery-bin:
+    <<: *node
+    command: node services/delivery-bin.js
+    environment: { RIDER_SEARCH_MS: "${RIDER_SEARCH_MS:-0}" }
+    ports: ["5102:5102"]
+    profiles: ["ex1-data-decision"]
+
+  # ---------- ex2-swap-store ----------
+  orders:
+    <<: *node
+    command: node services/orders.js
+    environment: { STORE: "${STORE:-file}" }
+    ports: ["5111:5111"]
+    profiles: ["ex2-swap-store"]
+
+  # ---------- ex3-template-drift (aur baaki tools) ----------
+  toolbox:
+    <<: *node
+    command: node start.js ex3-template-drift
+    network_mode: host
+    profiles: ["ex3-template-drift"]

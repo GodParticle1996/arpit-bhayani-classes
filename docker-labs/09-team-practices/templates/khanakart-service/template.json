@@ -1,0 +1,12 @@
+{
+  "name": "khanakart-service",
+  "version": "1.4.0",
+  "features": {
+    "rest-external": "1.0.0",
+    "grpc-internal": "1.1.0",
+    "circuit-breaker": "1.3.0",
+    "prometheus-metrics": "1.0.0",
+    "redis-client": "1.2.0",
+    "folder-structure": "1.0.0"
+  }
+}

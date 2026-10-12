@@ -1,0 +1,16 @@
+{
+  "name": "khanakart-09-team-practices",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KhanaKart lab — data-driven design debate (JSON/HTTP1 vs binary/HTTP2), swappable storage + contract tests + safe migration, template drift + RFC",
+  "scripts": {
+    "start": "node start.js",
+    "bench": "node tools/bench.js",
+    "contract-test": "node tools/contract-test.js",
+    "seed": "node tools/seed.js",
+    "backfill": "node tools/backfill.js",
+    "drift": "node tools/drift.js",
+    "rfc": "node tools/rfc.js"
+  },
+  "dependencies": { "express": "^5.1.0" }
+}
